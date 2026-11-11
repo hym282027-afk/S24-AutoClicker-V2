@@ -27,9 +27,29 @@ public class MainActivity extends Activity {
             try { int x=Integer.parseInt(xField.getText().toString()); int y=Integer.parseInt(yField.getText().toString()); long delay=Long.parseLong(delayField.getText().toString());
                 if(x<0||y<0||delay<100||delay>86400000) throw new IllegalArgumentException();
                 getPreferences(MODE_PRIVATE).edit().putInt("x",x).putInt("y",y).putLong("delay",delay).apply();
-                ClickService.instance.start(x,y,delay); Toast.makeText(this,"자동 터치 시작",Toast.LENGTH_SHORT).show();
+                ClickService.instance.startMultiple(
+                    OverlayService.x,
+                    OverlayService.y,
+                    new long[]{100, 500, 1000}
+                ); Toast.makeText(this,"자동 터치 시작",Toast.LENGTH_SHORT).show();
             } catch(Exception e) { Toast.makeText(this,"좌표와 간격을 확인하세요",Toast.LENGTH_SHORT).show(); } });
         Button stop = new Button(this); stop.setText("중지"); layout.addView(stop); stop.setOnClickListener(v -> { if(ClickService.instance!=null) ClickService.instance.stop(); Toast.makeText(this,"중지됨",Toast.LENGTH_SHORT).show(); });
+        
+        Button overlay = new Button(this);
+        overlay.setText("터치 위치 표시");
+        layout.addView(overlay);
+        overlay.setOnClickListener(v -> {
+            if (android.provider.Settings.canDrawOverlays(this)) {
+                startService(new Intent(this, OverlayService.class));
+            } else {
+                Intent intent = new Intent(
+                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    android.net.Uri.parse("package:" + getPackageName())
+                );
+                startActivity(intent);
+            }
+        });
+
         setContentView(layout);
     }
     EditText field(LinearLayout layout,String label,String fallback) {
